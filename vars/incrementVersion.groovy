@@ -1,30 +1,36 @@
 
 def call() {
+
     def currentVersion = sh(
-        script: "mvn help:evaluate -Dexpression=project.version -q -DforceStdout",
+        script: 'mvn help:evaluate -Dexpression=project.version -q -DforceStdout',
         returnStdout: true
     ).trim()
 
     echo "Current version: ${currentVersion}"
 
-    def matcher = currentVersion =~ /^(\d+)\.(\d+)\.(\d+)(-SNAPSHOT)?$/
+    // Remove SNAPSHOT suffix
+    def cleanVersion = currentVersion.replace('-SNAPSHOT', '')
 
-    if (!matcher.matches()) {
+    // Split version into three parts
+    def parts = cleanVersion.split('\\.')
+
+    if (parts.length != 3 ||
+        !parts.every { it ==~ /[0-9]+/ }) {
         error "Unsupported Maven version: ${currentVersion}"
     }
 
-    def major = matcher[0][1].toInteger()
-    def minor = matcher[0][2].toInteger()
-    def patch = matcher[0][3].toInteger() + 1
+    def major = parts[0].toInteger()
+    def minor = parts[1].toInteger()
+    def patch = parts[2].toInteger() + 1
 
-    def newVersion = "${major}.${minor}.${patch}"
+    def newVersion = "${major}.${minor}.${patch}-SNAPSHOT"
 
     echo "New version: ${newVersion}"
 
     sh """
         mvn versions:set \
-          -DnewVersion=${newVersion} \
-          -DgenerateBackupPoms=false
+            -DnewVersion=${newVersion} \
+            -DgenerateBackupPoms=false
     """
 
     return newVersion
