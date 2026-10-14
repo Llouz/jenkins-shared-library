@@ -22,9 +22,7 @@ def call() {
 
     echo "New version: ${newVersion}"
 
-    sh """
-        mvn versions:set -DnewVersion=${newVersion} -DgenerateBackupPoms=false
-    """
+    sh "mvn versions:set -DnewVersion=${newVersion} -DgenerateBackupPoms=false"
 
-    return newVersion
+    return newVersion.toString()
 }
