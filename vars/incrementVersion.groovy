@@ -1,6 +1,5 @@
 
 def call() {
-
     def currentVersion = sh(
         script: 'mvn help:evaluate -Dexpression=project.version -q -DforceStdout',
         returnStdout: true
@@ -8,15 +7,11 @@ def call() {
 
     echo "Current version: ${currentVersion}"
 
-    // Remove SNAPSHOT suffix
     def cleanVersion = currentVersion.replace('-SNAPSHOT', '')
+    def parts = cleanVersion.tokenize('.')
 
-    // Split version into three parts
-    def parts = cleanVersion.split('\\.')
-
-    if (parts.length != 3 ||
-        !parts.every { it ==~ /[0-9]+/ }) {
-        error "Unsupported Maven version: ${currentVersion}"
+    if (parts.size() != 3) {
+        error "Invalid Maven version: ${currentVersion}"
     }
 
     def major = parts[0].toInteger()
@@ -28,9 +23,7 @@ def call() {
     echo "New version: ${newVersion}"
 
     sh """
-        mvn versions:set \
-            -DnewVersion=${newVersion} \
-            -DgenerateBackupPoms=false
+        mvn versions:set -DnewVersion=${newVersion} -DgenerateBackupPoms=false
     """
 
     return newVersion
